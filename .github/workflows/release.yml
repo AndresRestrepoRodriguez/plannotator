@@ -6,8 +6,7 @@ on:
       - 'v*'
 
 permissions:
-  contents: read
-  id-token: write  # Required for OIDC
+  contents: write
 
 jobs:
   build:
@@ -43,84 +42,47 @@ jobs:
         run: bun run build:hook
 
       - name: Compile binary
-        run: |
-          bun build apps/hook/server/index.ts --compile --target=${{ matrix.bun-target }} --outfile plannotator
-
-      - name: Prepare npm package
         shell: bash
         run: |
-          mkdir -p npm/${{ matrix.target }}/bin
           if [ "${{ matrix.os }}" == "windows-latest" ]; then
-            mv plannotator.exe npm/${{ matrix.target }}/bin/plannotator.exe
+            bun build apps/hook/server/index.ts --compile --target=${{ matrix.bun-target }} --outfile plannotator.exe
+            mv plannotator.exe plannotator-${{ matrix.target }}.exe
+            sha256sum plannotator-${{ matrix.target }}.exe > plannotator-${{ matrix.target }}.exe.sha256
           else
-            mv plannotator npm/${{ matrix.target }}/bin/plannotator
-            chmod +x npm/${{ matrix.target }}/bin/plannotator
+            bun build apps/hook/server/index.ts --compile --target=${{ matrix.bun-target }} --outfile plannotator
+            mv plannotator plannotator-${{ matrix.target }}
+            chmod +x plannotator-${{ matrix.target }}
+            shasum -a 256 plannotator-${{ matrix.target }} > plannotator-${{ matrix.target }}.sha256 || sha256sum plannotator-${{ matrix.target }} > plannotator-${{ matrix.target }}.sha256
           fi
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.target }}
-          path: npm/${{ matrix.target }}
+          path: plannotator-${{ matrix.target }}*
 
-  publish:
+  release:
     needs: build
     runs-on: ubuntu-latest
     permissions:
-      contents: read
-      id-token: write
+      contents: write
 
     steps:
       - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          registry-url: 'https://registry.npmjs.org'
 
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
           path: artifacts
+          merge-multiple: true
 
-      - name: Prepare packages
-        run: |
-          # Copy binaries into npm package directories
-          for platform in darwin-arm64 darwin-x64 linux-x64 win32-x64; do
-            cp -r artifacts/$platform/bin npm/$platform/
-          done
+      - name: List artifacts
+        run: ls -la artifacts/
 
-      - name: Get version from tag
-        id: version
-        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
-
-      - name: Update package versions
-        run: |
-          VERSION=${{ steps.version.outputs.VERSION }}
-          # Update main package
-          cd npm/plannotator
-          npm version $VERSION --no-git-tag-version
-          sed -i "s/\"@plannotator\/darwin-arm64\": \".*\"/\"@plannotator\/darwin-arm64\": \"$VERSION\"/" package.json
-          sed -i "s/\"@plannotator\/darwin-x64\": \".*\"/\"@plannotator\/darwin-x64\": \"$VERSION\"/" package.json
-          sed -i "s/\"@plannotator\/linux-x64\": \".*\"/\"@plannotator\/linux-x64\": \"$VERSION\"/" package.json
-          sed -i "s/\"@plannotator\/win32-x64\": \".*\"/\"@plannotator\/win32-x64\": \"$VERSION\"/" package.json
-          cd ../..
-          # Update platform packages
-          for platform in darwin-arm64 darwin-x64 linux-x64 win32-x64; do
-            cd npm/$platform
-            npm version $VERSION --no-git-tag-version
-            cd ../..
-          done
-
-      - name: Publish platform packages
-        run: |
-          for platform in darwin-arm64 darwin-x64 linux-x64 win32-x64; do
-            cd npm/$platform
-            npm publish --provenance --access public
-            cd ../..
-          done
-
-      - name: Publish main package
-        run: |
-          cd npm/plannotator
-          npm publish --provenance --access public
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/*
+          generate_release_notes: true
+          draft: false
+          prerelease: ${{ contains(github.ref, '-') }}

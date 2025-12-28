@@ -1,0 +1,134 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'apps/marketing/**'
+      - 'apps/portal/**'
+      - 'packages/**'
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'Deploy target'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - marketing
+          - portal
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      marketing: ${{ steps.changes.outputs.marketing }}
+      portal: ${{ steps.changes.outputs.portal }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for changes
+        id: changes
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            if [[ "${{ inputs.target }}" == "all" || "${{ inputs.target }}" == "marketing" ]]; then
+              echo "marketing=true" >> $GITHUB_OUTPUT
+            else
+              echo "marketing=false" >> $GITHUB_OUTPUT
+            fi
+            if [[ "${{ inputs.target }}" == "all" || "${{ inputs.target }}" == "portal" ]]; then
+              echo "portal=true" >> $GITHUB_OUTPUT
+            else
+              echo "portal=false" >> $GITHUB_OUTPUT
+            fi
+          else
+            # For push events, check what changed
+            git fetch origin ${{ github.event.before }} --depth=1 2>/dev/null || true
+
+            MARKETING_CHANGED=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} 2>/dev/null | grep -E '^(apps/marketing/|packages/)' || true)
+            PORTAL_CHANGED=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} 2>/dev/null | grep -E '^(apps/portal/|packages/)' || true)
+
+            if [[ -n "$MARKETING_CHANGED" ]]; then
+              echo "marketing=true" >> $GITHUB_OUTPUT
+            else
+              echo "marketing=false" >> $GITHUB_OUTPUT
+            fi
+
+            if [[ -n "$PORTAL_CHANGED" ]]; then
+              echo "portal=true" >> $GITHUB_OUTPUT
+            else
+              echo "portal=false" >> $GITHUB_OUTPUT
+            fi
+          fi
+
+  deploy-marketing:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.marketing == 'true'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Build marketing
+        run: bun run build:marketing
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Deploy to S3
+        run: aws s3 sync apps/marketing/dist/ s3://plannotator-marketing/ --delete
+
+      - name: Invalidate CloudFront
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id E284ON0A27O2H6 \
+            --paths "/*"
+
+  deploy-portal:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.portal == 'true'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Build portal
+        run: bun run build:portal
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Deploy to S3
+        run: aws s3 sync apps/portal/dist/ s3://plannotator-portal/ --delete
+
+      - name: Invalidate CloudFront
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id EP0KB9EFUWYXR \
+            --paths "/*"

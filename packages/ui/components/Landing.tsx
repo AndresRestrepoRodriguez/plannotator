@@ -3,7 +3,7 @@ import logoImage from '../plannotator.webp';
 import { ModeToggle } from './ModeToggle';
 
 interface LandingProps {
-  onEnter: () => void;
+  onEnter?: () => void;
 }
 
 export const Landing: React.FC<LandingProps> = ({ onEnter }) => {
@@ -12,22 +12,28 @@ export const Landing: React.FC<LandingProps> = ({ onEnter }) => {
       {/* Nav */}
       <nav className="fixed top-0 left-0 right-0 h-12 flex items-center justify-between px-6 bg-background/80 backdrop-blur-sm border-b border-border/30 z-50">
         <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-md bg-primary/20 flex items-center justify-center">
-            <svg className="w-3.5 h-3.5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-          </div>
           <span className="text-sm font-semibold tracking-tight">Plannotator</span>
         </div>
         <div className="flex items-center gap-3">
-          <a
-            href="https://github.com/anthropics/claude-code"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Claude Code Docs
-          </a>
+          <div className="flex items-center gap-2 text-xs">
+            <a
+              href="https://github.com/backnotprop/plannotator"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
+              GitHub
+            </a>
+            <span className="text-muted-foreground/50">|</span>
+            <a
+              href="https://github.com/backnotprop/plannotator/blob/main/apps/hook/README.md"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Install
+            </a>
+          </div>
           <ModeToggle />
         </div>
       </nav>
@@ -58,15 +64,27 @@ export const Landing: React.FC<LandingProps> = ({ onEnter }) => {
               Interactive Plan Review: Mark up and refine your plans using a UI, easily share for team collaboration, automatically integrates with agent plan mode.
             </p>
 
-            <button
-              onClick={onEnter}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary text-primary-foreground font-medium hover:opacity-90 transition-opacity"
-            >
-              Open Editor
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-              </svg>
-            </button>
+            {onEnter ? (
+              <button
+                onClick={onEnter}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary text-primary-foreground font-medium hover:opacity-90 transition-opacity"
+              >
+                Open Demo
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
+              </button>
+            ) : (
+              <a
+                href="https://share.plannotator.ai"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary text-primary-foreground font-medium hover:opacity-90 transition-opacity"
+              >
+                Open Demo
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
+              </a>
+            )}
           </div>
         </section>
 
@@ -248,7 +266,7 @@ export const Landing: React.FC<LandingProps> = ({ onEnter }) => {
         {/* Technical */}
         <section className="py-16 px-8 border-t border-border/30 bg-card/30">
           <h2 className="text-xl font-semibold mb-6">Technical details</h2>
-          <ul className="space-y-2 text-sm text-muted-foreground max-w-2xl">
+          <ul className="space-y-2 text-sm text-muted-foreground max-w-2xl mb-6">
             <li className="flex items-center gap-2">
               <span className="text-primary">•</span>
               Single HTML file build — runs from Bun server on random port
@@ -262,6 +280,23 @@ export const Landing: React.FC<LandingProps> = ({ onEnter }) => {
               URL sharing via deflate compression — no backend required
             </li>
           </ul>
+
+          <a
+            href="https://github.com/backnotprop/plannotator"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <span className="inline-flex items-center rounded overflow-hidden">
+              <span className="bg-[#121011] text-white px-2 py-1 flex items-center gap-1.5">
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+                </svg>
+                <span className="text-xs font-medium">GitHub</span>
+              </span>
+            </span>
+            <span className="underline underline-offset-2">View GitHub repository</span>
+          </a>
         </section>
 
         {/* Footer */}

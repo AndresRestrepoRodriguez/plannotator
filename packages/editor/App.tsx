@@ -2,9 +2,8 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { parseMarkdownToBlocks, exportDiff } from '@plannotator/ui/utils/parser';
 import { Viewer, ViewerHandle } from '@plannotator/ui/components/Viewer';
 import { AnnotationPanel } from '@plannotator/ui/components/AnnotationPanel';
-import { Landing } from '@plannotator/ui/components/Landing';
 import { ExportModal } from '@plannotator/ui/components/ExportModal';
-import { Annotation, Block, AnnotationType, EditorMode } from '@plannotator/ui/types';
+import { Annotation, Block, EditorMode } from '@plannotator/ui/types';
 import { ThemeProvider } from '@plannotator/ui/components/ThemeProvider';
 import { ModeToggle } from '@plannotator/ui/components/ModeToggle';
 import { ModeSwitcher } from '@plannotator/ui/components/ModeSwitcher';
@@ -213,12 +212,6 @@ export const CursorOverlay: React.FC<CursorOverlayProps> = ({
 `;
 
 const App: React.FC = () => {
-  const [page, setPage] = useState<'landing' | 'editor'>(() => {
-    const path = window.location.pathname;
-    const hasShareHash = window.location.hash.length > 1;
-    // Go directly to editor if path indicates or if we have a share hash
-    return path === '/editor' || path === '/app' || hasShareHash ? 'editor' : 'landing';
-  });
   const [markdown, setMarkdown] = useState(PLAN_CONTENT);
   const [annotations, setAnnotations] = useState<Annotation[]>([]);
   const [selectedAnnotationId, setSelectedAnnotationId] = useState<string | null>(null);
@@ -251,8 +244,7 @@ const App: React.FC = () => {
     setMarkdown,
     setAnnotations,
     () => {
-      // When loaded from share, go directly to editor
-      setPage('editor');
+      // When loaded from share, mark as loaded
       setIsLoading(false);
     }
   );
@@ -270,11 +262,6 @@ const App: React.FC = () => {
       return () => clearTimeout(timer);
     }
   }, [pendingSharedAnnotations, clearPendingSharedAnnotations]);
-
-  const goToEditor = () => {
-    window.history.pushState({}, '', '/editor');
-    setPage('editor');
-  };
 
   const handleTaterModeChange = (enabled: boolean) => {
     setTaterMode(enabled);
@@ -295,7 +282,6 @@ const App: React.FC = () => {
       .then((data: { plan: string }) => {
         setMarkdown(data.plan);
         setIsApiMode(true);
-        setPage('editor'); // Skip landing page in API mode
       })
       .catch(() => {
         // Not in API mode - use default content
@@ -353,14 +339,6 @@ const App: React.FC = () => {
 
   const diffOutput = useMemo(() => exportDiff(blocks, annotations), [blocks, annotations]);
 
-  if (page === 'landing') {
-    return (
-      <ThemeProvider defaultTheme="dark">
-        <Landing onEnter={goToEditor} />
-      </ThemeProvider>
-    );
-  }
-
   return (
     <ThemeProvider defaultTheme="dark">
       <div className="h-screen flex flex-col bg-background overflow-hidden">
@@ -369,12 +347,14 @@ const App: React.FC = () => {
         {/* Minimal Header */}
         <header className="h-12 flex items-center justify-between px-2 md:px-4 border-b border-border/50 bg-card/50 backdrop-blur-xl z-50">
           <div className="flex items-center gap-2 md:gap-3">
-            <button
-              onClick={() => { window.history.pushState({}, '', '/'); setPage('landing'); }}
+            <a
+              href="https://plannotator.ai"
+              target="_blank"
+              rel="noopener noreferrer"
               className="flex items-center gap-1.5 md:gap-2 hover:opacity-80 transition-opacity"
             >
               <span className="text-sm font-semibold tracking-tight">Plannotator</span>
-            </button>
+            </a>
             <span className="text-xs text-muted-foreground font-mono opacity-60 hidden md:inline">v0.1</span>
           </div>
 

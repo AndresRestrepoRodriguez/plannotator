@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="plannotator_banner.webp" alt="Plannotator" width="100%" />
+</p>
+
 # Plannotator
 
 A visual plan review UI for Claude Code that intercepts `ExitPlanMode` and lets you annotate, approve, or provide structured feedback.

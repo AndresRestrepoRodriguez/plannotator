@@ -18,13 +18,14 @@ plannotator/
 ├── packages/
 │   ├── server/                   # Shared server implementation
 │   │   ├── index.ts              # startPlannotatorServer(), handleServerReady()
+│   │   ├── storage.ts            # Plan saving to disk (getPlanDir, savePlan, etc.)
 │   │   ├── remote.ts             # isRemoteSession(), getServerPort()
 │   │   ├── browser.ts            # openBrowser()
 │   │   ├── integrations.ts       # Obsidian, Bear integrations
 │   │   └── project.ts            # Project name detection for tags
 │   ├── ui/                       # Shared React components
 │   │   ├── components/           # Viewer, Toolbar, Settings, etc.
-│   │   ├── utils/                # parser.ts, sharing.ts, storage.ts
+│   │   ├── utils/                # parser.ts, sharing.ts, storage.ts, planSave.ts, agentSwitch.ts
 │   │   ├── hooks/                # useSharing.ts
 │   │   └── types.ts
 │   └── editor/                   # Main App.tsx
@@ -80,15 +81,18 @@ Deny    → stdout: {"hookSpecificOutput":{"decision":{"behavior":"deny","messag
 
 ## Server API
 
-| Endpoint       | Method | Purpose                           |
-| -------------- | ------ | --------------------------------- |
-| `/api/plan`    | GET    | Returns plan markdown as JSON     |
-| `/api/approve` | POST   | User approved the plan            |
-| `/api/deny`    | POST   | User denied with feedback in body |
+| Endpoint              | Method | Purpose                                    |
+| --------------------- | ------ | ------------------------------------------ |
+| `/api/plan`           | GET    | Returns `{ plan, origin }`                 |
+| `/api/approve`        | POST   | Approve plan (body: planSave, agentSwitch, obsidian, bear, feedback) |
+| `/api/deny`           | POST   | Deny plan (body: feedback, planSave)       |
+| `/api/image`          | GET    | Serve image by path query param            |
+| `/api/upload`         | POST   | Upload image, returns temp path            |
+| `/api/obsidian/vaults`| GET    | Detect available Obsidian vaults           |
 
-**Location:** `packages/server/index.ts` (shared), `apps/hook/server/index.ts` (Claude Code entry), `apps/opencode-plugin/index.ts` (OpenCode entry)
+**Location:** `packages/server/index.ts`
 
-Both plugins use the shared `startPlannotatorServer()` from `packages/server`. The server handles remote detection, port configuration, and all API routes. Port is random locally (`port: 0`) or fixed (`19432`) in remote mode.
+Both plugins use `startPlannotatorServer()` from `packages/server`. Port is random locally or fixed (`19432`) in remote mode.
 
 ## Data Types
 
@@ -188,9 +192,9 @@ type ShareableAnnotation =
 
 ## Settings Persistence
 
-**Location:** `packages/ui/utils/storage.ts`
+**Location:** `packages/ui/utils/storage.ts`, `planSave.ts`, `agentSwitch.ts`
 
-Uses cookies instead of localStorage because each hook invocation runs on a random port, and localStorage is scoped by origin (including port). Cookies are scoped by domain only.
+Uses cookies (not localStorage) because each hook invocation runs on a random port. Settings include identity, plan saving (enabled/custom path), and agent switching (OpenCode only).
 
 ## Syntax Highlighting
 

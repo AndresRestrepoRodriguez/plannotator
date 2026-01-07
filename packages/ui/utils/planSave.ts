@@ -47,10 +47,3 @@ export function savePlanSaveSettings(settings: PlanSaveSettings): void {
     storage.removeItem(STORAGE_KEY_PATH);
   }
 }
-
-/**
- * Check if plan saving is enabled
- */
-export function isPlanSaveEnabled(): boolean {
-  return getPlanSaveSettings().enabled;
-}

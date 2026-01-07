@@ -44,10 +44,3 @@ export function getAgentSwitchSettings(): AgentSwitchSettings {
 export function saveAgentSwitchSettings(settings: AgentSwitchSettings): void {
   storage.setItem(STORAGE_KEY, settings.switchTo);
 }
-
-/**
- * Check if agent switching is enabled
- */
-export function isAgentSwitchEnabled(): boolean {
-  return getAgentSwitchSettings().switchTo !== 'disabled';
-}

@@ -68,6 +68,10 @@ if ($userPath -notlike "*$installDir*") {
     Write-Host "Added to PATH. Restart your terminal for changes to take effect."
 }
 
+# Clear OpenCode plugin cache
+Remove-Item -Recurse -Force "$env:USERPROFILE\.cache\opencode\node_modules\@plannotator" -ErrorAction SilentlyContinue
+Remove-Item -Recurse -Force "$env:USERPROFILE\.bun\install\cache\@plannotator" -ErrorAction SilentlyContinue
+
 # Install Claude Code slash command
 $claudeCommandsDir = "$env:USERPROFILE\.claude\commands"
 New-Item -ItemType Directory -Force -Path $claudeCommandsDir | Out-Null

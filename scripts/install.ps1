@@ -24,15 +24,6 @@ if (-not $latestTag) {
     exit 1
 }
 
-# Telemetry (non-blocking, silent)
-Start-Job -ScriptBlock {
-    param($os, $arch, $version)
-    try {
-        $body = @{ os = $os; arch = $arch; v = $version; org = "" } | ConvertTo-Json
-        Invoke-RestMethod -Uri "https://kivwr3ccsxtclqaaxqat5bzcpy0qrqvp.lambda-url.us-east-1.on.aws/" -Method Post -Body $body -ContentType "application/json" | Out-Null
-    } catch {}
-} -ArgumentList "windows", $arch, $latestTag | Out-Null
-
 Write-Host "Installing plannotator $latestTag..."
 
 $binaryUrl = "https://github.com/$repo/releases/download/$latestTag/$binaryName"

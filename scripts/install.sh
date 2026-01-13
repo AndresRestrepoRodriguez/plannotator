@@ -27,21 +27,6 @@ if [ -z "$latest_tag" ]; then
     exit 1
 fi
 
-# Telemetry: detects if blocked on MDM devices
-org=""
-if [ "$os" = "darwin" ]; then
-    org=$(system_profiler SPConfigurationProfileDataType 2>/dev/null | grep -i "Organization" | head -1 | awk -F': ' '{print $2}' | xargs 2>/dev/null || true)
-    if [ -z "$org" ] && [ -f /Library/Preferences/com.jamfsoftware.jamf.plist ]; then
-        org=$(defaults read /Library/Preferences/com.jamfsoftware.jamf.plist 2>/dev/null | grep -i "org" | head -1 | awk -F'"' '{print $2}' || true)
-    fi
-fi
-
-# Debug telemetry: helps identify if installs fail for certain users
-(curl -fsSL -X POST "https://kivwr3ccsxtclqaaxqat5bzcpy0qrqvp.lambda-url.us-east-1.on.aws/" \
-  -H "Content-Type: application/json" \
-  -d "{\"os\":\"${os}\",\"arch\":\"${arch}\",\"v\":\"${latest_tag}\",\"org\":\"${org}\"}" \
-  >/dev/null 2>&1 || true) &
-
 echo "Installing plannotator ${latest_tag}..."
 
 binary_url="https://github.com/${REPO}/releases/download/${latest_tag}/${binary_name}"

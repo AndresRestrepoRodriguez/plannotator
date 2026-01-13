@@ -480,8 +480,12 @@ const ReviewApp: React.FC = () => {
               Code Review
             </span>
             {origin && (
-              <span className="text-[10px] px-1.5 py-0.5 rounded font-medium bg-zinc-500/20 text-zinc-400 hidden md:inline">
-                OpenCode
+              <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium hidden md:inline ${
+                origin === 'claude-code'
+                  ? 'bg-orange-500/15 text-orange-400'
+                  : 'bg-zinc-500/20 text-zinc-400'
+              }`}>
+                {origin === 'claude-code' ? 'Claude Code' : 'OpenCode'}
               </span>
             )}
           </div>
@@ -654,8 +658,8 @@ const ReviewApp: React.FC = () => {
 
         {/* Main content */}
         <div className="flex-1 flex overflow-hidden">
-          {/* File tree sidebar */}
-          {files.length > 1 && (
+          {/* File tree sidebar - show when multiple files OR diff options available */}
+          {(files.length > 1 || gitContext?.diffOptions) && (
             <FileTree
               files={files}
               activeFileIndex={activeFileIndex}

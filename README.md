@@ -26,7 +26,7 @@ Interactive Plan Review for AI Coding Agents. Mark up and refine your plans usin
 </table>
 
 
-**New:**
+**New in v0.5.0:**
 
  - **Code Review** — Run `/plannotator-review` to review git diffs with inline annotations (select line numbers to annotate), switch between diff views, and send feedback to your agent
  - Attach and annotate images with your feedback (pen, arrow, circle tools)

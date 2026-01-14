@@ -326,6 +326,7 @@ const App: React.FC = () => {
   const [pendingPasteImage, setPendingPasteImage] = useState<{ file: File; blobUrl: string } | null>(null);
   const [showPermissionModeSetup, setShowPermissionModeSetup] = useState(false);
   const [permissionMode, setPermissionMode] = useState<PermissionMode>('bypassPermissions');
+  const [sharingEnabled, setSharingEnabled] = useState(true);
   const viewerRef = useRef<ViewerHandle>(null);
 
   // URL-based sharing
@@ -380,9 +381,12 @@ const App: React.FC = () => {
         if (!res.ok) throw new Error('Not in API mode');
         return res.json();
       })
-      .then((data: { plan: string; origin?: 'claude-code' | 'opencode' }) => {
+      .then((data: { plan: string; origin?: 'claude-code' | 'opencode'; sharingEnabled?: boolean }) => {
         setMarkdown(data.plan);
         setIsApiMode(true);
+        if (data.sharingEnabled !== undefined) {
+          setSharingEnabled(data.sharingEnabled);
+        }
         if (data.origin) {
           setOrigin(data.origin);
           // For Claude Code, check if user needs to configure permission mode
@@ -741,6 +745,7 @@ const App: React.FC = () => {
             onDelete={handleDeleteAnnotation}
             onEdit={handleEditAnnotation}
             shareUrl={shareUrl}
+            sharingEnabled={sharingEnabled}
           />
         </div>
 
@@ -753,6 +758,7 @@ const App: React.FC = () => {
           diffOutput={diffOutput}
           annotationCount={annotations.length}
           taterSprite={taterMode ? <TaterSpritePullup /> : undefined}
+          sharingEnabled={sharingEnabled}
         />
 
         {/* Feedback prompt dialog */}

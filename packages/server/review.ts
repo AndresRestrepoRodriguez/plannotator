@@ -34,6 +34,8 @@ export interface ReviewServerOptions {
   diffType?: DiffType;
   /** Git context with branch info and available diff options */
   gitContext?: GitContext;
+  /** Whether URL sharing is enabled (default: true) */
+  sharingEnabled?: boolean;
   /** Called when server starts with the URL, remote status, and port */
   onReady?: (url: string, isRemote: boolean, port: number) => void;
 }
@@ -71,7 +73,7 @@ const RETRY_DELAY_MS = 500;
 export async function startReviewServer(
   options: ReviewServerOptions
 ): Promise<ReviewServerResult> {
-  const { htmlContent, origin, gitContext, onReady } = options;
+  const { htmlContent, origin, gitContext, sharingEnabled = true, onReady } = options;
 
   // Mutable state for diff switching
   let currentPatch = options.rawPatch;
@@ -114,6 +116,7 @@ export async function startReviewServer(
               origin,
               diffType: currentDiffType,
               gitContext,
+              sharingEnabled,
             });
           }
 

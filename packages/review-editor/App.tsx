@@ -41,6 +41,7 @@ interface DiffData {
   origin?: 'opencode' | 'claude-code';
   diffType?: string;
   gitContext?: GitContext;
+  sharingEnabled?: boolean;
 }
 
 // Simple diff parser to extract files from unified diff
@@ -148,6 +149,7 @@ const ReviewApp: React.FC = () => {
   const [isApproving, setIsApproving] = useState(false);
   const [submitted, setSubmitted] = useState<'approved' | 'feedback' | false>(false);
   const [showApproveWarning, setShowApproveWarning] = useState(false);
+  const [sharingEnabled, setSharingEnabled] = useState(true);
 
   const identity = useMemo(() => getIdentity(), []);
 
@@ -200,6 +202,7 @@ const ReviewApp: React.FC = () => {
         origin?: 'opencode' | 'claude-code';
         diffType?: string;
         gitContext?: GitContext;
+        sharingEnabled?: boolean;
       }) => {
         const apiFiles = parseDiffToFiles(data.rawPatch);
         setDiffData({
@@ -209,11 +212,13 @@ const ReviewApp: React.FC = () => {
           origin: data.origin,
           diffType: data.diffType,
           gitContext: data.gitContext,
+          sharingEnabled: data.sharingEnabled,
         });
         setFiles(apiFiles);
         if (data.origin) setOrigin(data.origin);
         if (data.diffType) setDiffType(data.diffType);
         if (data.gitContext) setGitContext(data.gitContext);
+        if (data.sharingEnabled !== undefined) setSharingEnabled(data.sharingEnabled);
       })
       .catch(() => {
         // Not in API mode - use demo content

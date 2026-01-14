@@ -15,6 +15,7 @@ interface ExportModalProps {
   diffOutput: string;
   annotationCount: number;
   taterSprite?: React.ReactNode;
+  sharingEnabled?: boolean;
 }
 
 type Tab = 'share' | 'diff';
@@ -27,8 +28,9 @@ export const ExportModal: React.FC<ExportModalProps> = ({
   diffOutput,
   annotationCount,
   taterSprite,
+  sharingEnabled = true,
 }) => {
-  const [activeTab, setActiveTab] = useState<Tab>('share');
+  const [activeTab, setActiveTab] = useState<Tab>(sharingEnabled ? 'share' : 'diff');
   const [copied, setCopied] = useState(false);
 
   if (!isOpen) return null;
@@ -93,32 +95,34 @@ export const ExportModal: React.FC<ExportModalProps> = ({
 
         {/* Body */}
         <div className="flex-1 overflow-auto p-4">
-          {/* Tabs */}
-          <div className="flex gap-1 bg-muted rounded-lg p-1 mb-4">
-            <button
-              onClick={() => setActiveTab('share')}
-              className={`flex-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-                activeTab === 'share'
-                  ? 'bg-background text-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              Share
-            </button>
-            <button
-              onClick={() => setActiveTab('diff')}
-              className={`flex-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-                activeTab === 'diff'
-                  ? 'bg-background text-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              Raw Diff
-            </button>
-          </div>
+          {/* Tabs - only show if sharing is enabled */}
+          {sharingEnabled && (
+            <div className="flex gap-1 bg-muted rounded-lg p-1 mb-4">
+              <button
+                onClick={() => setActiveTab('share')}
+                className={`flex-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                  activeTab === 'share'
+                    ? 'bg-background text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                Share
+              </button>
+              <button
+                onClick={() => setActiveTab('diff')}
+                className={`flex-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                  activeTab === 'diff'
+                    ? 'bg-background text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                Raw Diff
+              </button>
+            </div>
+          )}
 
           {/* Tab content */}
-          {activeTab === 'share' ? (
+          {sharingEnabled && activeTab === 'share' ? (
             <div className="space-y-4">
               <div>
                 <label className="block text-xs font-medium text-muted-foreground mb-2">

@@ -32,6 +32,23 @@ import reviewHtml from "./review-editor.html" with { type: "text" };
 const reviewHtmlContent = reviewHtml as unknown as string;
 
 export const PlannotatorPlugin: Plugin = async (ctx) => {
+  // Determine if sharing is enabled
+  // Priority: OpenCode config > env var > default (enabled)
+  let sharingEnabled = true;
+  try {
+    const config = await ctx.client.config.get({ query: { directory: ctx.directory } });
+    // @ts-ignore - share config may exist
+    if (config?.share !== undefined) {
+      sharingEnabled = config.share !== "disabled";
+    } else {
+      // Fall back to env var
+      sharingEnabled = process.env.PLANNOTATOR_SHARE !== "disabled";
+    }
+  } catch {
+    // Fall back to env var if config read fails
+    sharingEnabled = process.env.PLANNOTATOR_SHARE !== "disabled";
+  }
+
   return {
     "experimental.chat.system.transform": async (_input, output) => {
       output.system.push(`
@@ -84,6 +101,7 @@ Do NOT proceed with implementation until your plan is approved.
           origin: "opencode",
           diffType: "uncommitted",
           gitContext,
+          sharingEnabled,
           htmlContent: reviewHtmlContent,
           onReady: handleReviewServerReady,
         });
@@ -142,6 +160,7 @@ Do NOT proceed with implementation until your plan is approved.
           const server = await startPlannotatorServer({
             plan: args.plan,
             origin: "opencode",
+            sharingEnabled,
             htmlContent,
             onReady: (url, isRemote, port) => {
               handleServerReady(url, isRemote, port);

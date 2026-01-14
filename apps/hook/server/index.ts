@@ -40,6 +40,9 @@ const reviewHtmlContent = reviewHtml as unknown as string;
 // Check for subcommand
 const args = process.argv.slice(2);
 
+// Check if URL sharing is enabled (default: true)
+const sharingEnabled = process.env.PLANNOTATOR_SHARE !== "disabled";
+
 if (args[0] === "review") {
   // ============================================
   // CODE REVIEW MODE
@@ -61,6 +64,7 @@ if (args[0] === "review") {
     origin: "claude-code",
     diffType: "uncommitted",
     gitContext,
+    sharingEnabled,
     htmlContent: reviewHtmlContent,
     onReady: handleReviewServerReady,
   });
@@ -107,6 +111,7 @@ if (args[0] === "review") {
     plan: planContent,
     origin: "claude-code",
     permissionMode,
+    sharingEnabled,
     htmlContent: planHtmlContent,
     onReady: (url, isRemote, port) => {
       handleServerReady(url, isRemote, port);

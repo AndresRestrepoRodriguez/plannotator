@@ -12,6 +12,7 @@ interface PanelProps {
   onEdit?: (id: string, updates: Partial<Annotation>) => void;
   selectedId: string | null;
   shareUrl?: string;
+  sharingEnabled?: boolean;
 }
 
 export const AnnotationPanel: React.FC<PanelProps> = ({
@@ -22,7 +23,8 @@ export const AnnotationPanel: React.FC<PanelProps> = ({
   onDelete,
   onEdit,
   selectedId,
-  shareUrl
+  shareUrl,
+  sharingEnabled = true
 }) => {
   const [copied, setCopied] = useState(false);
   const sortedAnnotations = [...annotations].sort((a, b) => a.createdA - b.createdA);
@@ -82,7 +84,7 @@ export const AnnotationPanel: React.FC<PanelProps> = ({
       </div>
 
       {/* Quick Share Footer */}
-      {shareUrl && annotations.length > 0 && (
+      {sharingEnabled && shareUrl && annotations.length > 0 && (
         <div className="p-2 border-t border-border/50">
           <button
             onClick={handleQuickShare}

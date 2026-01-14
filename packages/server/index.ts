@@ -43,6 +43,8 @@ export interface ServerOptions {
   htmlContent: string;
   /** Current permission mode to preserve (Claude Code only) */
   permissionMode?: string;
+  /** Whether URL sharing is enabled (default: true) */
+  sharingEnabled?: boolean;
   /** Called when server starts with the URL, remote status, and port */
   onReady?: (url: string, isRemote: boolean, port: number) => void;
 }
@@ -83,7 +85,7 @@ const RETRY_DELAY_MS = 500;
 export async function startPlannotatorServer(
   options: ServerOptions
 ): Promise<ServerResult> {
-  const { plan, origin, htmlContent, permissionMode, onReady } = options;
+  const { plan, origin, htmlContent, permissionMode, sharingEnabled = true, onReady } = options;
 
   const isRemote = isRemoteSession();
   const configuredPort = getServerPort();
@@ -122,7 +124,7 @@ export async function startPlannotatorServer(
 
           // API: Get plan content
           if (url.pathname === "/api/plan") {
-            return Response.json({ plan, origin, permissionMode });
+            return Response.json({ plan, origin, permissionMode, sharingEnabled });
           }
 
           // API: Serve images (local paths or temp uploads)

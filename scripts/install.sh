@@ -51,6 +51,9 @@ if [ "$actual_checksum" != "$expected_checksum" ]; then
     exit 1
 fi
 
+# Remove old binary first (handles Windows .exe and locked file issues)
+rm -f "$INSTALL_DIR/plannotator" "$INSTALL_DIR/plannotator.exe" 2>/dev/null || true
+
 mv "$tmp_file" "$INSTALL_DIR/plannotator"
 chmod +x "$INSTALL_DIR/plannotator"
 

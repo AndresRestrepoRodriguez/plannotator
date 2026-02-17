@@ -2,7 +2,9 @@
   <img src="apps/marketing/public/og-image.webp" alt="Plannotator" width="80%" />
 </p>
 
-# Plannotator
+# Plannotator (Fork with Untracked Files Support)
+
+> **This fork adds support for untracked files in code review.** The `/plannotator-review` command now shows both tracked changes AND new files not yet added to git.
 
 Interactive Plan Review for AI Coding Agents. Mark up and refine your plans using a visual UI, share for team collaboration, and seamlessly integrate with **Claude Code** and **OpenCode**.
 
@@ -32,9 +34,31 @@ Interactive Plan Review for AI Coding Agents. Mark up and refine your plans usin
  - Attach and annotate images with your feedback (pen, arrow, circle tools)
  - Auto-save approved plans to [Obsidian](https://obsidian.md/) and [Bear Notes](https://bear.app/)
 
-## Install for Claude Code
+## Install for Claude Code (This Fork)
 
-**Install the `plannotator` command:**
+**Step 1: Add the plugin marketplace and install:**
+
+```
+/plugin marketplace add AndresRestrepoRodriguez/plannotator
+/plugin install plannotator
+```
+
+**Step 2: Build the binary (required one-time step):**
+
+```bash
+cd ~/.claude/plugins/marketplaces/plannotator/apps/hook
+bun build server/index.ts --compile --outfile ~/.local/bin/plannotator
+```
+
+**Step 3: Restart Claude Code**
+
+The `/plannotator-review` command is now ready and will show untracked files.
+
+---
+
+## Install from Original Repo
+
+If you want the original version (without untracked files support):
 
 **macOS / Linux / WSL:**
 
@@ -42,19 +66,11 @@ Interactive Plan Review for AI Coding Agents. Mark up and refine your plans usin
 curl -fsSL https://plannotator.ai/install.sh | bash
 ```
 
-**Windows PowerShell:**
-
-```powershell
-irm https://plannotator.ai/install.ps1 | iex
-```
-
 **Then in Claude Code:**
 
 ```
 /plugin marketplace add backnotprop/plannotator
 /plugin install plannotator@plannotator
-
-# IMPORTANT: Restart Claude Code after plugin install
 ```
 
 See [apps/hook/README.md](apps/hook/README.md) for detailed installation instructions including a `manual hook` approach.

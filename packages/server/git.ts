@@ -6,6 +6,8 @@
  */
 
 import { $ } from "bun";
+import { readFile } from "fs/promises";
+import { join } from "path";
 
 export type DiffType =
   | "uncommitted"
@@ -96,6 +98,62 @@ export async function getGitContext(): Promise<GitContext> {
 }
 
 /**
+ * Get untracked files (new files not yet added to git)
+ */
+async function getUntrackedFiles(): Promise<string[]> {
+  try {
+    const result =
+      await $`git ls-files --others --exclude-standard`.quiet();
+    const files = result.text().trim();
+    return files ? files.split("\n") : [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Generate a diff-style patch for an untracked (new) file
+ */
+async function generateNewFilePatch(filePath: string): Promise<string> {
+  try {
+    const cwd = process.cwd();
+    const fullPath = join(cwd, filePath);
+    const content = await readFile(fullPath, "utf-8");
+    const lines = content.split("\n");
+
+    // Build a git diff style patch for a new file
+    const header = [
+      `diff --git a/${filePath} b/${filePath}`,
+      `new file mode 100644`,
+      `--- /dev/null`,
+      `+++ b/${filePath}`,
+      `@@ -0,0 +1,${lines.length} @@`,
+    ].join("\n");
+
+    const body = lines.map((line) => `+${line}`).join("\n");
+
+    return header + "\n" + body;
+  } catch (error) {
+    console.error(`Error reading untracked file ${filePath}:`, error);
+    return "";
+  }
+}
+
+/**
+ * Get patches for all untracked files
+ */
+async function getUntrackedFilePatches(): Promise<string> {
+  const untrackedFiles = await getUntrackedFiles();
+  if (untrackedFiles.length === 0) return "";
+
+  const patches = await Promise.all(
+    untrackedFiles.map((file) => generateNewFilePatch(file))
+  );
+
+  return patches.filter(Boolean).join("\n");
+}
+
+/**
  * Run git diff with the specified type
  */
 export async function runGitDiff(
@@ -107,30 +165,39 @@ export async function runGitDiff(
 
   try {
     switch (diffType) {
-      case "uncommitted":
-        patch = (await $`git diff HEAD`.quiet()).text();
+      case "uncommitted": {
+        const trackedDiff = (await $`git diff HEAD`.quiet()).text();
+        const untrackedPatches = await getUntrackedFilePatches();
+        patch = trackedDiff + (untrackedPatches ? "\n" + untrackedPatches : "");
         label = "Uncommitted changes";
         break;
+      }
 
       case "staged":
         patch = (await $`git diff --staged`.quiet()).text();
         label = "Staged changes";
         break;
 
-      case "unstaged":
-        patch = (await $`git diff`.quiet()).text();
+      case "unstaged": {
+        const unstagedDiff = (await $`git diff`.quiet()).text();
+        const untrackedPatches = await getUntrackedFilePatches();
+        patch = unstagedDiff + (untrackedPatches ? "\n" + untrackedPatches : "");
         label = "Unstaged changes";
         break;
+      }
 
       case "last-commit":
         patch = (await $`git diff HEAD~1..HEAD`.quiet()).text();
         label = "Last commit";
         break;
 
-      case "branch":
-        patch = (await $`git diff ${defaultBranch}..HEAD`.quiet()).text();
+      case "branch": {
+        const branchDiff = (await $`git diff ${defaultBranch}..HEAD`.quiet()).text();
+        const untrackedPatches = await getUntrackedFilePatches();
+        patch = branchDiff + (untrackedPatches ? "\n" + untrackedPatches : "");
         label = `Changes vs ${defaultBranch}`;
         break;
+      }
 
       default:
         patch = "";
